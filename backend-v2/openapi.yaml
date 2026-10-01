@@ -1,0 +1,432 @@
+openapi: 3.0.3
+info:
+  title: Vehicle Rental API (V2)
+  version: 2.0.0
+  description: |
+    REST API for managing vehicle rentals, with user signup and login.
+
+    **Authentication:** `POST /api/auth/signup` and `POST /api/auth/login` return a JWT token.
+    Send it in the `Authorization` header as `Bearer <token>` to create, update or delete
+    vehicle rentals. Reading vehicle rentals (GET) is public. Tokens are valid for 3 days.
+servers:
+  - url: /
+    description: Same server that serves these docs
+  - url: http://localhost:4000
+    description: Local development
+tags:
+  - name: Authentication
+    description: Register and log in users
+  - name: VehicleRentals
+    description: Create, read, update and delete vehicle rentals
+
+paths:
+  /api/auth/signup:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: Creates a user account and returns a JWT token, so the user is logged in straight away. The password is stored hashed and is never returned.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupInput'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: |
+            Invalid input. Possible `error` values:
+            `All fields are required`, `All address fields are required`,
+            `Username already in use`, `License number already in use`,
+            or a Mongoose validation message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthError'
+              example:
+                error: Username already in use
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Log in an existing user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Username or password missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthError'
+              example:
+                error: Username and password are required
+        '401':
+          description: Wrong username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthError'
+              example:
+                error: Invalid username or password
+
+  /api/vehicleRentals:
+    get:
+      tags: [VehicleRentals]
+      summary: Get all vehicle rentals
+      description: Public. Returns all vehicle rentals.
+      responses:
+        '200':
+          description: List of vehicle rentals (empty array if there are none)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VehicleRental'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch vehicle rentals
+    post:
+      tags: [VehicleRentals]
+      summary: Create a vehicle rental
+      description: Protected. Requires a valid JWT token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleRentalInput'
+      responses:
+        '201':
+          description: Vehicle rental created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleRental'
+        '400':
+          description: Validation failed (missing required field, wrong type or invalid `availabilityStatus`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: Failed to create vehicle rental
+                error: 'VehicleRental validation failed: vehicleModel: Path `vehicleModel` is required.'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/vehicleRentals/{vehicleRentalId}:
+    parameters:
+      - name: vehicleRentalId
+        in: path
+        required: true
+        description: MongoDB ObjectId of the vehicle rental
+        schema:
+          type: string
+          example: 6abe26d852854eef18743f9a
+    get:
+      tags: [VehicleRentals]
+      summary: Get one vehicle rental
+      description: Public.
+      responses:
+        '200':
+          description: The vehicle rental
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleRental'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [VehicleRentals]
+      summary: Update a vehicle rental
+      description: Protected. Send only the fields you want to change; the values are validated.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleRentalUpdate'
+            example:
+              dailyPrice: 55
+              availabilityStatus: maintenance
+      responses:
+        '200':
+          description: The updated vehicle rental
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleRental'
+        '400':
+          description: Invalid id or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: Failed to update vehicle rental
+                error: 'Validation failed: availabilityStatus: `stolen` is not a valid enum value for path `availabilityStatus`.'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [VehicleRentals]
+      summary: Delete a vehicle rental
+      description: Protected.
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Deleted (no response body)
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Token from signup or login. Header format: `Authorization: Bearer <token>`'
+
+  responses:
+    Unauthorized:
+      description: Missing, invalid or expired token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthError'
+          example:
+            error: Authorization header missing or invalid
+    InvalidId:
+      description: The id is not a valid MongoDB ObjectId
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Invalid vehicle rental id
+    NotFound:
+      description: No vehicle rental with this id
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Vehicle rental not found
+
+  schemas:
+    Agency:
+      type: object
+      required: [name, contactEmail]
+      properties:
+        name:
+          type: string
+          example: City Wheels
+        contactEmail:
+          type: string
+          format: email
+          example: info@citywheels.com
+        fleetSize:
+          type: integer
+          example: 120
+
+    Location:
+      type: object
+      required: [city, state]
+      properties:
+        city:
+          type: string
+          example: Helsinki
+        state:
+          type: string
+          example: Uusimaa
+
+    VehicleRentalInput:
+      type: object
+      required: [vehicleModel, category, description, agency, location, dailyPrice, insurancePolicy]
+      properties:
+        vehicleModel:
+          type: string
+          example: Toyota Corolla 2024
+        category:
+          type: string
+          example: Sedan
+        description:
+          type: string
+          example: Reliable and fuel-efficient compact sedan.
+        agency:
+          $ref: '#/components/schemas/Agency'
+        location:
+          $ref: '#/components/schemas/Location'
+        dailyPrice:
+          type: number
+          example: 45
+        availabilityStatus:
+          type: string
+          enum: [available, rented, maintenance]
+          default: available
+        bookingDeadline:
+          type: string
+          format: date-time
+          example: '2026-12-31T00:00:00.000Z'
+        insurancePolicy:
+          type: string
+          example: Full coverage included
+
+    VehicleRentalUpdate:
+      description: Same fields as VehicleRentalInput, all optional.
+      type: object
+      properties:
+        vehicleModel:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        agency:
+          $ref: '#/components/schemas/Agency'
+        location:
+          $ref: '#/components/schemas/Location'
+        dailyPrice:
+          type: number
+        availabilityStatus:
+          type: string
+          enum: [available, rented, maintenance]
+        bookingDeadline:
+          type: string
+          format: date-time
+        insurancePolicy:
+          type: string
+
+    VehicleRental:
+      allOf:
+        - $ref: '#/components/schemas/VehicleRentalInput'
+        - type: object
+          properties:
+            id:
+              type: string
+              example: 6abe26d852854eef18743f9a
+            _id:
+              type: string
+              example: 6abe26d852854eef18743f9a
+            listingDate:
+              type: string
+              format: date-time
+              description: Set automatically when the rental is created
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    SignupInput:
+      type: object
+      required: [name, username, password, phone_number, licenseNumber, date_of_birth, address]
+      properties:
+        name:
+          type: string
+          example: Matti Meikäläinen
+        username:
+          type: string
+          description: Must be unique
+          example: matti
+        password:
+          type: string
+          format: password
+          example: Secret123!
+        phone_number:
+          type: string
+          example: '+358401234567'
+        licenseNumber:
+          type: string
+          description: Must be unique
+          example: FI-123456
+        date_of_birth:
+          type: string
+          format: date
+          example: '1995-05-15'
+        address:
+          type: object
+          required: [licenseExpiryDate, city, yearsOfExperience]
+          properties:
+            licenseExpiryDate:
+              type: string
+              format: date
+              example: '2030-12-31'
+            city:
+              type: string
+              example: Helsinki
+            yearsOfExperience:
+              type: integer
+              example: 8
+
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: matti
+        password:
+          type: string
+          format: password
+          example: Secret123!
+
+    AuthResponse:
+      type: object
+      properties:
+        username:
+          type: string
+          example: matti
+        token:
+          type: string
+          description: JWT token, valid for 3 days
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    AuthError:
+      type: object
+      properties:
+        error:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        error:
+          type: string
