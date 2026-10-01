@@ -13,7 +13,7 @@ const getAllVehicleRentals = async (req, res) => {
 // POST /api/vehicleRentals
 const createVehicleRental = async (req, res) => {
   try {
-    const newVehicleRental = await VehicleRental(req.body);
+    const newVehicleRental = await VehicleRental.create({...req.body});
     res.status(201).json(newVehicleRental);
   } catch (error) {
     res.status(400).json({ message: 'Failed to create vehicle rental', error: error.message });
