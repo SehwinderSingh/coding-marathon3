@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// pages & components
 import Home from "./pages/HomePage";
 import AddVehicleRentalPage from "./pages/AddVehicleRentalPage";
+import EditVehiclePage from "./pages/EditVehiclePage"; 
 import Navbar from "./components/Navbar";
 import NotFoundPage from "./pages/NotFoundPage";
 
@@ -15,6 +15,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/add-rental" element={<AddVehicleRentalPage />} />
+            <Route path="/edit/:id" element={<EditVehiclePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
@@ -24,4 +25,3 @@ const App = () => {
 };
 
 export default App;
-
