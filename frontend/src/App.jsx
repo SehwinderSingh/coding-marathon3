@@ -5,18 +5,19 @@ import Home from "./pages/HomePage";
 import AddVehicleRentalPage from "./pages/AddVehicleRentalPage";
 import Navbar from "./components/Navbar";
 import NotFoundPage from "./pages/NotFoundPage";
-
+import VehicleRentalPage from "./pages/VehicleRentalPage";
 const App = () => {
   return (
     <div className="App">
       <BrowserRouter>
         <Navbar />
         <div className="content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/add-rental" element={<AddVehicleRentalPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+        <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/add-rental" element={<AddVehicleRentalPage />} />
+                <Route path="/rentals/:id" element={<VehicleRentalPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+        </Routes>
         </div>
       </BrowserRouter>
     </div>
