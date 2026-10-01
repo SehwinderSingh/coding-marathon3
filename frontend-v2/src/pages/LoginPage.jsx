@@ -1,109 +1,74 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { login } from "../services/authService";
 
-const LoginPage = () => {
-  const navigate = useNavigate();
+const LoginPage = ({ setIsAuthenticated }) => {
+    const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
 
-    try {
-      const response = await fetch("/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-      });
+        if (!email || !password) {
+            setError("Please fill in all fields");
+            return;
+        }
 
-      const data = await response.json();
+        try {
+            const data = await login({
+                email,
+                password,
+            });
 
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed");
-      }
+            localStorage.setItem("token", data.token);
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("username", data.username);
+            setIsAuthenticated(true);
 
-      navigate("/");
-      window.location.reload();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+            navigate("/");
+        } catch (error) {
+            setError(error.message);
+        }
+    };
 
-  return (
-    <div
-      style={{
-        maxWidth: "400px",
-        margin: "40px auto",
-        padding: "20px",
-      }}
-    >
-      <h2>Login</h2>
+    return (
+        <div>
+            <h2>Login</h2>
 
-      {error && (
-        <p style={{ color: "red" }}>
-          {error}
-        </p>
-      )}
+            {error && <p>{error}</p>}
 
-      <form onSubmit={handleSubmit}>
-        <label>Username:</label>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Email</label>
+                    <br />
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter email"
+                    />
+                </div>
 
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-          style={{
-            display: "block",
-            width: "100%",
-            marginBottom: "15px",
-            padding: "8px",
-            boxSizing: "border-box",
-          }}
-        />
+                <div>
+                    <label>Password</label>
+                    <br />
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter password"
+                    />
+                </div>
 
-        <label>Password:</label>
+                <br />
 
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{
-            display: "block",
-            width: "100%",
-            marginBottom: "15px",
-            padding: "8px",
-            boxSizing: "border-box",
-          }}
-        />
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
-
-      <p>
-        Don't have an account?{" "}
-        <Link to="/signup">Signup</Link>
-      </p>
-    </div>
-  );
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    );
 };
 
 export default LoginPage;

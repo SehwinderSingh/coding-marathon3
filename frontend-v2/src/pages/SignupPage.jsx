@@ -1,197 +1,88 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { signup } from "../services/authService";
 
 const SignupPage = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    username: "",
-    password: "",
-    phone_number: "",
-    licenseNumber: "",
-    date_of_birth: "",
-    licenseExpiryDate: "",
-    city: "",
-    yearsOfExperience: "",
-  });
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+        if (!name || !email || !password) {
+            setError("Please fill in all fields");
+            return;
+        }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters");
+            return;
+        }
 
-    try {
-      const response = await fetch("/api/users/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          username: formData.username,
-          password: formData.password,
-          phone_number: formData.phone_number,
-          licenseNumber: formData.licenseNumber,
-          date_of_birth: formData.date_of_birth,
-          address: {
-            licenseExpiryDate: formData.licenseExpiryDate,
-            city: formData.city,
-            yearsOfExperience: Number(formData.yearsOfExperience),
-          },
-        }),
-      });
+        try {
+            await signup({
+                name,
+                email,
+                password,
+            });
 
-      const data = await response.json();
+            navigate("/login");
+        } catch (error) {
+            setError(error.message);
+        }
+    };
 
-      if (!response.ok) {
-        throw new Error(data.error || "Signup failed");
-      }
+    return (
+        <div>
+            <h2>Signup</h2>
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("username", data.username);
+            {error && <p>{error}</p>}
 
-      navigate("/");
-      window.location.reload();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Name</label>
+                    <br />
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter name"
+                    />
+                </div>
 
-  const fieldStyle = {
-    display: "block",
-    width: "100%",
-    marginBottom: "15px",
-    padding: "8px",
-    boxSizing: "border-box",
-  };
+                <div>
+                    <label>Email</label>
+                    <br />
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter email"
+                    />
+                </div>
 
-  return (
-    <div
-      style={{
-        maxWidth: "500px",
-        margin: "40px auto",
-        padding: "20px",
-      }}
-    >
-      <h2>Create Account</h2>
+                <div>
+                    <label>Password</label>
+                    <br />
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter password"
+                    />
+                </div>
 
-      {error && (
-        <p style={{ color: "red" }}>
-          {error}
-        </p>
-      )}
+                <br />
 
-      <form onSubmit={handleSubmit}>
-        <label>Name:</label>
-        <input
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          style={fieldStyle}
-          required
-        />
-
-        <label>Username:</label>
-        <input
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          style={fieldStyle}
-          required
-        />
-
-        <label>Password:</label>
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          style={fieldStyle}
-          required
-        />
-
-        <label>Phone Number:</label>
-        <input
-          name="phone_number"
-          value={formData.phone_number}
-          onChange={handleChange}
-          style={fieldStyle}
-          required
-        />
-
-        <label>License Number:</label>
-        <input
-          name="licenseNumber"
-          value={formData.licenseNumber}
-          onChange={handleChange}
-          style={fieldStyle}
-          required
-        />
-
-        <label>Date of Birth:</label>
-        <input
-          type="date"
-          name="date_of_birth"
-          value={formData.date_of_birth}
-          onChange={handleChange}
-          style={fieldStyle}
-          required
-        />
-
-        <label>License Expiry Date:</label>
-        <input
-          type="date"
-          name="licenseExpiryDate"
-          value={formData.licenseExpiryDate}
-          onChange={handleChange}
-          style={fieldStyle}
-          required
-        />
-
-        <label>City:</label>
-        <input
-          name="city"
-          value={formData.city}
-          onChange={handleChange}
-          style={fieldStyle}
-          required
-        />
-
-        <label>Years of Experience:</label>
-        <input
-          type="number"
-          name="yearsOfExperience"
-          value={formData.yearsOfExperience}
-          onChange={handleChange}
-          style={fieldStyle}
-          min="0"
-          required
-        />
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Creating Account..." : "Signup"}
-        </button>
-      </form>
-
-      <p>
-        Already have an account?{" "}
-        <Link to="/login">Login</Link>
-      </p>
-    </div>
-  );
+                <button type="submit">Signup</button>
+            </form>
+        </div>
+    );
 };
 
 export default SignupPage;

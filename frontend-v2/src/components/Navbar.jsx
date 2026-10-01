@@ -1,13 +1,13 @@
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-function Navbar() {
+import { logout } from "../services/authService";
+
+function Navbar({ isAuthenticated, setIsAuthenticated }) {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
+    logout();
+    setIsAuthenticated(false);
     navigate("/login");
   };
 
@@ -27,7 +27,7 @@ function Navbar() {
         }}
       >
         <h3 style={{ color: "white", margin: 0 }}>
-          Vehicle Rental V2
+          Vehicle Rental
         </h3>
 
         <Link
@@ -37,7 +37,7 @@ function Navbar() {
           Home
         </Link>
 
-        {token ? (
+        {isAuthenticated ? (
           <>
             <Link
               to="/add-rental"
