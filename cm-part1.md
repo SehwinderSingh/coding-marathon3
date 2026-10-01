@@ -171,10 +171,11 @@ The deployed application must be working and accessible.
 
 Part A is complete when the group has:
 
-* [ ] API V1 CRUD endpoints implemented
-* [ ] Backend tests for API V1 implemented
+* [*] API V1 CRUD endpoints implemented
+* [*] Backend tests for API V1 implemented
 * [ ] Frontend V1 implemented
 * [ ] Frontend works with API V1
 * [ ] API V1 and Frontend V1 deployed
 
 > A group may continue working on Part A after 12:00 if necessary, but Part A badges are awarded based on completion before the 12:00.
+
