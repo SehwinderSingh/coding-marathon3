@@ -1,81 +1,76 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+
+const formatDate = (date) =>
+  date ? new Date(date).toLocaleDateString('en-GB') : '-';
 
 const VehicleRentalPage = () => {
   const { id } = useParams();
-
-  const [vehicle, setVehicle] = useState(null);
-  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const [rental, setRental] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchVehicle = async () => {
+    const fetchRental = async () => {
       try {
-        const response = await fetch(`/api/vehicleRentals/${id}`);
-
-        if (!response.ok) {
-          throw new Error("Vehicle rental not found");
-        }
-
-        const data = await response.json();
-        setVehicle(data);
-      } catch (error) {
-        setError(error.message);
+        const res = await fetch(`/api/vehicleRentals/${id}`);
+        if (!res.ok) throw new Error('Failed to fetch vehicle rental');
+        const data = await res.json();
+        setRental(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
-
-    fetchVehicle();
+    fetchRental();
   }, [id]);
 
-  if (error) {
-    return (
-      <div className="rental-preview">
-        <h2>Error</h2>
-        <p>{error}</p>
-        <Link to="/">Back to vehicles</Link>
-      </div>
-    );
-  }
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this vehicle rental?')) return;
+    try {
+      const res = await fetch(`/api/vehicleRentals/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete vehicle rental');
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
-  if (!vehicle) {
-    return <p>Loading vehicle rental...</p>;
-  }
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
+  if (!rental) return <p>Vehicle rental not found</p>;
 
   return (
-    <div className="rental-preview">
-      <h2>{vehicle.vehicleModel}</h2>
-
-      <p><strong>Category:</strong> {vehicle.category}</p>
-      <p><strong>Description:</strong> {vehicle.description}</p>
+    <div className="rental-details">
+      <h2>{rental.vehicleModel}</h2>
+      <p><strong>Category:</strong> {rental.category}</p>
+      <p><strong>Description:</strong> {rental.description}</p>
 
       <h3>Agency</h3>
-      <p><strong>Name:</strong> {vehicle.agency?.name}</p>
-      <p><strong>Email:</strong> {vehicle.agency?.contactEmail}</p>
-      <p><strong>Fleet Size:</strong> {vehicle.agency?.fleetSize}</p>
+      <p><strong>Name:</strong> {rental.agency?.name}</p>
+      <p><strong>Email:</strong> {rental.agency?.contactEmail}</p>
+      <p><strong>Fleet Size:</strong> {rental.agency?.fleetSize ?? '-'}</p>
 
       <h3>Location</h3>
-      <p><strong>City:</strong> {vehicle.location?.city}</p>
-      <p><strong>State:</strong> {vehicle.location?.state}</p>
+      <p><strong>City:</strong> {rental.location?.city}</p>
+      <p><strong>State:</strong> {rental.location?.state}</p>
 
-      <p><strong>Daily Price:</strong> €{vehicle.dailyPrice}</p>
-      <p><strong>Availability:</strong> {vehicle.availabilityStatus}</p>
+      <p><strong>Daily Price:</strong> €{rental.dailyPrice}</p>
+      <p><strong>Availability:</strong> {rental.availabilityStatus}</p>
+      <p><strong>Listing Date:</strong> {formatDate(rental.listingDate)}</p>
+      <p><strong>Booking Deadline:</strong> {formatDate(rental.bookingDeadline)}</p>
+      <p><strong>Insurance Policy:</strong> {rental.insurancePolicy}</p>
 
-      <p>
-        <strong>Listing Date:</strong>{" "}
-        {vehicle.listingDate
-          ? new Date(vehicle.listingDate).toLocaleDateString()
-          : "Not available"}
+      <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+        <button onClick={() => navigate(`/edit/${id}`)}>Edit</button>
+        <button onClick={handleDelete}>Delete</button>
+      </div>
+
+      <p style={{ marginTop: '20px' }}>
+        <Link to="/">Back to vehicles</Link>
       </p>
-
-      <p>
-        <strong>Booking Deadline:</strong>{" "}
-        {vehicle.bookingDeadline
-          ? new Date(vehicle.bookingDeadline).toLocaleDateString()
-          : "No deadline"}
-      </p>
-
-      <p><strong>Insurance Policy:</strong> {vehicle.insurancePolicy}</p>
-
-      <Link to="/">Back to vehicles</Link>
     </div>
   );
 };
