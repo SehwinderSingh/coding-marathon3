@@ -1,17 +1,72 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { logout } from "../services/authService";
 
-function Navbar() {
+function Navbar({ isAuthenticated, setIsAuthenticated }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    setIsAuthenticated(false);
+    navigate("/login");
+  };
+
   return (
-    <nav style={{ background: '#333', padding: '15px', marginBottom: '20px' }}>
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-        <h3 style={{ color: 'white', margin: 0 }}>Vehicle Rental</h3>
-        <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>
+    <nav
+      style={{
+        background: "#333",
+        padding: "15px",
+        marginBottom: "20px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          gap: "20px",
+          alignItems: "center",
+        }}
+      >
+        <h3 style={{ color: "white", margin: 0 }}>
+          Vehicle Rental
+        </h3>
+
+        <Link
+          to="/"
+          style={{ color: "white", textDecoration: "none" }}
+        >
           Home
         </Link>
-        <Link to="/add-rental" style={{ color: 'white', textDecoration: 'none' }}>
-          Add Vehicle
-        </Link>
+
+        {isAuthenticated ? (
+          <>
+            <Link
+              to="/add-rental"
+              style={{ color: "white", textDecoration: "none" }}
+            >
+              Add Vehicle
+            </Link>
+
+            <button onClick={handleLogout}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              style={{ color: "white", textDecoration: "none" }}
+            >
+              Login
+            </Link>
+
+            <Link
+              to="/signup"
+              style={{ color: "white", textDecoration: "none" }}
+            >
+              Signup
+            </Link>
+          </>
+        )}
       </div>
     </nav>
   );
