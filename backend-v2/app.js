@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const vehicleRentalRouter = require('./routes/vehicleRentalRouter');
+const userRouter = require('./routes/userRouter');
 const { unknownEndpoint, errorHandler, requestLogger } = require('./middleware/customMiddleware');
 
 const app = express();
@@ -13,7 +14,7 @@ app.use(requestLogger);
 
 // API routes
 app.use('/api/vehicleRentals', vehicleRentalRouter);
-
+app.use('/api/users', userRouter);
 // Serve the React build from the 'view' folder in production
 if (process.env.NODE_ENV === 'production') {
   const viewPath = path.join(__dirname, 'view');
