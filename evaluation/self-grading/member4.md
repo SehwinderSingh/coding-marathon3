@@ -1,0 +1,3 @@
+Self-Grade - Pratham
+Grade: 57/60
+I would give myself 57 out of 60 points because I completed my assigned Part 2 frontend tasks for V1 and Part 3 frontend tasks for V2. For Frontend V1 Part 2, I worked on the Vehicle Rental frontend and connected the required frontend functionality with the API. For Frontend V2 Part 3, I worked on vehicle rental CRUD functionality, API integration, Login and Signup, JWT token handling, protected routes, Logout, and authentication-based Navbar functionality. I also worked with Git branches, commits, API integration, and resolved merge conflicts during development. Some final integration and testing depended on the backend and other group members' work being completed.
