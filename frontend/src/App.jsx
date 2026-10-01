@@ -15,21 +15,23 @@ const App = () => {
 
         <div className="content">
           <Routes>
-            <Route path="/" element={<Home />} /
-<Route
-  path="/add-rental"
-  element={<AddVehicleRentalPage />}
-/>
-
-<Route
-  path="/rental/:id"
-  element={<VehicleRentalPage />}
-/>
-
-<Route
-  path="/edit/:id"
-  element={<EditVehiclePage />}
-/>
+            <Route path="/" element={<Home />} />
+            <Route
+              path="/add-rental"
+              element={<AddVehicleRentalPage />}
+            />
+            <Route
+              path="/rentals/:id"
+              element={<VehicleRentalPage />}
+            />
+            <Route
+              path="/rental/:id"
+              element={<VehicleRentalPage />}
+            />
+            <Route
+              path="/edit/:id"
+              element={<EditVehiclePage />}
+            />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
