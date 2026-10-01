@@ -1,52 +1,57 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { addVehicle } from '../services/vehicleRentalApi';
+
 const AddVehicleRentalPage = () => {
-  const submitForm = (e) => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ title: '', price: '', description: '' });
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted");
+    setError(null);
+
+    try {
+      await addVehicle(formData);
+      navigate('/');
+    } catch (err) {
+      if (err.message.includes('Unauthorized')) {
+        setError('Session expired or invalid credentials. Please log in again.');
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        setError(err.message);
+      }
+    }
   };
 
   return (
-    <div className="create">
-      <h2>Add a New Vehicle Rental</h2>
-      <form onSubmit={submitForm}>
-        <label>Vehicle Model:</label>
-        <input type="text" required />
-        <label>Category:</label>
-        <select>
-          <option value="Economy">Economy</option>
-          <option value="Luxury">Luxury</option>
-          <option value="SUV">SUV</option>
-          <option value="Van">Van</option>
-          <option value="Truck">Truck</option>
-        </select>
-        <label>Description:</label>
-        <textarea required></textarea>
-        <label>Agency Name:</label>
-        <input type="text" required />
-        <label>Agency Email:</label>
-        <input type="email" required />
-        <label>Fleet Size:</label>
-        <input type="number" min="0" />
-        <label>City:</label>
-        <input type="text" required />
-        <label>State:</label>
-        <input type="text" required />
-        <label>Daily Price:</label>
-        <input type="number" step="0.01" min="0" required />
-        <label>Availability Status:</label>
-        <select>
-          <option value="available">Available</option>
-          <option value="rented">Rented</option>
-          <option value="maintenance">Maintenance</option>
-        </select>
-        <label>Booking Deadline:</label>
-        <input type="date" />
-        <label>Insurance Policy:</label>
-        <input type="text" required />
-        <button>Add Vehicle Rental</button>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <h2>Add Vehicle</h2>
+      {error && <p className="error">{error}</p>}
+      
+      <input 
+        type="text" 
+        placeholder="Title"
+        value={formData.title} 
+        onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
+        required 
+      />
+      <input 
+        type="number" 
+        placeholder="Price"
+        value={formData.price} 
+        onChange={(e) => setFormData({ ...formData, price: e.target.value })} 
+        required 
+      />
+      <textarea 
+        placeholder="Description"
+        value={formData.description} 
+        onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
+      />
+
+      <button type="submit">Add Vehicle</button>
+    </form>
   );
 };
 
 export default AddVehicleRentalPage;
-
