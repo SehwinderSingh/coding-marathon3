@@ -14,7 +14,7 @@ app.use(requestLogger);
 
 // API routes
 app.use('/api/vehicleRentals', vehicleRentalRouter);
-app.use('/api/users', userRouter);
+app.use('/api/auth', userRouter);
 // Serve the React build from the 'view' folder in production
 if (process.env.NODE_ENV === 'production') {
   const viewPath = path.join(__dirname, 'view');
