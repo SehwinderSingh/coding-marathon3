@@ -5,102 +5,146 @@ const EditVehiclePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [model, setModel] = useState("");
-  const [category, setCategory] = useState("Sedan");
+  const [vehicleModel, setVehicleModel] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+  const [agencyName, setAgencyName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [fleetSize, setFleetSize] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [dailyPrice, setDailyPrice] = useState("");
-  const [availability, setAvailability] = useState("available");
+  const [availabilityStatus, setAvailabilityStatus] = useState("available");
+  const [bookingDeadline, setBookingDeadline] = useState("");
+  const [insurancePolicy, setInsurancePolicy] = useState("");
 
-  // Load old vehicle data when page loads
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Load the existing vehicle rental
   useEffect(() => {
-    fetch(`/api/vehicleRentals/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setModel(data.model || "");
-        setCategory(data.category || "Sedan");
-        setDailyPrice(data.dailyPrice || "");
-        setAvailability(data.availability || "available");
-      })
-      .catch((err) => console.log("Error loading vehicle:", err));
+    const fetchRental = async () => {
+      try {
+        const res = await fetch(`/api/vehicleRentals/${id}`);
+        if (!res.ok) throw new Error("Failed to load vehicle rental");
+        const data = await res.json();
+
+        setVehicleModel(data.vehicleModel || "");
+        setCategory(data.category || "");
+        setDescription(data.description || "");
+        setAgencyName(data.agency?.name || "");
+        setContactEmail(data.agency?.contactEmail || "");
+        setFleetSize(data.agency?.fleetSize ?? "");
+        setCity(data.location?.city || "");
+        setState(data.location?.state || "");
+        setDailyPrice(data.dailyPrice ?? "");
+        setAvailabilityStatus(data.availabilityStatus || "available");
+        setBookingDeadline(data.bookingDeadline ? data.bookingDeadline.slice(0, 10) : "");
+        setInsurancePolicy(data.insurancePolicy || "");
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRental();
   }, [id]);
 
-  // Handle PUT request on submit
-  const handleSubmit = (e) => {
+  // Send the PUT request
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
 
-    const updatedVehicle = {
-      model,
+    const updatedRental = {
+      vehicleModel,
       category,
+      description,
+      agency: {
+        name: agencyName,
+        contactEmail,
+        ...(fleetSize !== "" && { fleetSize: Number(fleetSize) }),
+      },
+      location: { city, state },
       dailyPrice: Number(dailyPrice),
-      availability,
+      availabilityStatus,
+      ...(bookingDeadline && { bookingDeadline }),
+      insurancePolicy,
     };
 
-    fetch(`/api/vehicleRentals/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedVehicle),
-    })
-      .then(() => {
-        alert("Vehicle updated successfully!");
-        navigate("/");
-      })
-      .catch((err) => console.log("Error updating vehicle:", err));
+    try {
+      const res = await fetch(`/api/vehicleRentals/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedRental),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || data.message || "Failed to update vehicle rental");
+      }
+      navigate(`/rentals/${id}`);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
+  if (loading) return <p>Loading...</p>;
+
+  const field = { width: "100%", padding: "8px", marginBottom: "10px" };
+
   return (
-    <div style={{ maxWidth: "400px", margin: "20px auto" }}>
-      <h2>Edit Vehicle</h2>
+    <div style={{ maxWidth: "500px", margin: "20px auto" }}>
+      <h2>Edit Vehicle Rental</h2>
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "10px" }}>
-          <label>Model:</label>
-          <input
-            type="text"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            style={{ width: "100%", padding: "8px" }}
-            required
-          />
-        </div>
+        <label>Vehicle Model:</label>
+        <input style={field} value={vehicleModel} onChange={(e) => setVehicleModel(e.target.value)} required />
 
-        <div style={{ marginBottom: "10px" }}>
-          <label>Category:</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            style={{ width: "100%", padding: "8px" }}
-          >
-            <option value="Sedan">Sedan</option>
-            <option value="SUV">SUV</option>
-            <option value="Hatchback">Hatchback</option>
-            <option value="Truck">Truck</option>
-          </select>
-        </div>
+        <label>Category:</label>
+        <input style={field} value={category} onChange={(e) => setCategory(e.target.value)} required />
 
-        <div style={{ marginBottom: "10px" }}>
-          <label>Daily Price (€):</label>
-          <input
-            type="number"
-            value={dailyPrice}
-            onChange={(e) => setDailyPrice(e.target.value)}
-            style={{ width: "100%", padding: "8px" }}
-            required
-          />
-        </div>
+        <label>Description:</label>
+        <textarea style={field} value={description} onChange={(e) => setDescription(e.target.value)} required />
 
-        <div style={{ marginBottom: "10px" }}>
-          <label>Availability:</label>
-          <select
-            value={availability}
-            onChange={(e) => setAvailability(e.target.value)}
-            style={{ width: "100%", padding: "8px" }}
-          >
-            <option value="available">available</option>
-            <option value="rented">rented</option>
-          </select>
-        </div>
+        <h3>Agency</h3>
+        <label>Agency Name:</label>
+        <input style={field} value={agencyName} onChange={(e) => setAgencyName(e.target.value)} required />
 
-        <button type="submit" style={{ padding: "8px 16px", cursor: "pointer" }}>
-          Save Changes
-        </button>
+        <label>Contact Email:</label>
+        <input style={field} type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required />
+
+        <label>Fleet Size:</label>
+        <input style={field} type="number" value={fleetSize} onChange={(e) => setFleetSize(e.target.value)} />
+
+        <h3>Location</h3>
+        <label>City:</label>
+        <input style={field} value={city} onChange={(e) => setCity(e.target.value)} required />
+
+        <label>State:</label>
+        <input style={field} value={state} onChange={(e) => setState(e.target.value)} required />
+
+        <label>Daily Price (€):</label>
+        <input style={field} type="number" step="0.01" value={dailyPrice} onChange={(e) => setDailyPrice(e.target.value)} required />
+
+        <label>Availability:</label>
+        <select style={field} value={availabilityStatus} onChange={(e) => setAvailabilityStatus(e.target.value)}>
+          <option value="available">available</option>
+          <option value="rented">rented</option>
+          <option value="maintenance">maintenance</option>
+        </select>
+
+        <label>Booking Deadline:</label>
+        <input style={field} type="date" value={bookingDeadline} onChange={(e) => setBookingDeadline(e.target.value)} />
+
+        <label>Insurance Policy:</label>
+        <input style={field} value={insurancePolicy} onChange={(e) => setInsurancePolicy(e.target.value)} required />
+
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button type="submit" style={{ padding: "8px 16px", cursor: "pointer" }}>Save Changes</button>
+          <button type="button" onClick={() => navigate(`/rentals/${id}`)} style={{ padding: "8px 16px", cursor: "pointer" }}>
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );
