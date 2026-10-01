@@ -1,39 +1,41 @@
 import { useEffect, useState } from "react";
 import VehicleRentalListing from "./VehicleRentalListing";
+import { getVehicleRentals } from "../services/vehicleRentalApi";
 
 const VehicleRentalListings = () => {
-  const [vehicles, setVehicles] = useState([]);
-  const [error, setError] = useState("");
+  const [vehicleRentals, setVehicleRentals] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchVehicles = async () => {
+    const fetchVehicleRentals = async () => {
       try {
-        const response = await fetch("/api/vehicleRentals");
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch vehicle rentals");
-        }
-
-        const data = await response.json();
-        setVehicles(data);
+        const data = await getVehicleRentals();
+        setVehicleRentals(data);
       } catch (error) {
-        setError(error.message);
+        setError(error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchVehicles();
+    fetchVehicleRentals();
   }, []);
 
+  if (isLoading) {
+    return <p>Loading vehicle rentals...</p>;
+  }
+
   if (error) {
-    return <p>{error}</p>;
+    return <p>Error: {error.message}</p>;
   }
 
   return (
     <div className="rental-list">
-      {vehicles.map((vehicle) => (
+      {vehicleRentals.map((rental) => (
         <VehicleRentalListing
-          key={vehicle._id}
-          vehicle={vehicle}
+          key={rental._id}
+          rental={rental}
         />
       ))}
     </div>

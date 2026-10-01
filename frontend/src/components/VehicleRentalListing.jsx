@@ -1,21 +1,23 @@
 import { Link } from "react-router-dom";
 
-const VehicleRentalListing = ({ vehicle }) => {
+const VehicleRentalListing = ({ rental }) => {
   return (
     <div className="rental-preview">
-      <h2>{vehicle.vehicleModel}</h2>
+      <h2>{rental.vehicleModel}</h2>
 
-      <p>Category: {vehicle.category}</p>
+      <p>Category: {rental.category}</p>
+      <p>Description: {rental.description}</p>
 
-      <p>Daily Price: €{Number(vehicle.dailyPrice).toFixed(2)}</p>
+      <p>Agency: {rental.agency?.name}</p>
 
       <p>
-        Status:{" "}
-        {vehicle.availabilityStatus.charAt(0).toUpperCase() +
-          vehicle.availabilityStatus.slice(1)}
+        Location: {rental.location?.city}, {rental.location?.state}
       </p>
 
-      <Link to={`/rentals/${vehicle._id}`}>
+      <p>Daily Price: €{rental.dailyPrice}</p>
+      <p>Status: {rental.availabilityStatus}</p>
+
+      <Link to={`/rental/${rental._id}`}>
         View Details
       </Link>
     </div>
