@@ -9,6 +9,7 @@ import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import Navbar from "./components/Navbar";
 import NotFoundPage from "./pages/NotFoundPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -57,8 +58,36 @@ const App = () => {
             />
 
             <Route
+              path="/login"
+              element={<LoginPage />}
+            />
+
+            <Route
+              path="/signup"
+              element={<SignupPage />}
+            />
+
+            <Route
+              path="/add-rental"
+              element={
+                <ProtectedRoute>
+                  <AddVehicleRentalPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/edit/:id"
-              element={<EditVehiclePage />}
+              element={
+                <ProtectedRoute>
+                  <EditVehiclePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="*"
+              element={<NotFoundPage />}
             />
 
             <Route path="*" element={<NotFoundPage />} />
