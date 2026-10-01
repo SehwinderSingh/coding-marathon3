@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { updateVehicleRental } from "../services/vehicleRentalApi";
 
 const EditVehiclePage = () => {
   const { id } = useParams();
@@ -8,38 +9,52 @@ const EditVehiclePage = () => {
   const [vehicleModel, setVehicleModel] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+
   const [agencyName, setAgencyName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [fleetSize, setFleetSize] = useState("");
+
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
+
   const [dailyPrice, setDailyPrice] = useState("");
-  const [availabilityStatus, setAvailabilityStatus] = useState("available");
+  const [availabilityStatus, setAvailabilityStatus] = useState("");
   const [bookingDeadline, setBookingDeadline] = useState("");
   const [insurancePolicy, setInsurancePolicy] = useState("");
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  // Load the existing vehicle rental
   useEffect(() => {
-    const fetchRental = async () => {
+    const fetchVehicleRental = async () => {
       try {
-        const res = await fetch(`/api/vehicleRentals/${id}`);
-        if (!res.ok) throw new Error("Failed to load vehicle rental");
-        const data = await res.json();
+        const response = await fetch(`/api/vehicleRentals/${id}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to load vehicle rental");
+        }
+
+        const data = await response.json();
 
         setVehicleModel(data.vehicleModel || "");
         setCategory(data.category || "");
         setDescription(data.description || "");
+
         setAgencyName(data.agency?.name || "");
         setContactEmail(data.agency?.contactEmail || "");
         setFleetSize(data.agency?.fleetSize ?? "");
+
         setCity(data.location?.city || "");
         setState(data.location?.state || "");
+
         setDailyPrice(data.dailyPrice ?? "");
-        setAvailabilityStatus(data.availabilityStatus || "available");
-        setBookingDeadline(data.bookingDeadline ? data.bookingDeadline.slice(0, 10) : "");
+        setAvailabilityStatus(data.availabilityStatus || "");
+        setBookingDeadline(
+          data.bookingDeadline
+            ? data.bookingDeadline.substring(0, 10)
+            : ""
+        );
         setInsurancePolicy(data.insurancePolicy || "");
       } catch (err) {
         setError(err.message);
@@ -47,13 +62,14 @@ const EditVehiclePage = () => {
         setLoading(false);
       }
     };
-    fetchRental();
+
+    fetchVehicleRental();
   }, [id]);
 
-  // Send the PUT request
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    setError("");
+    setSaving(true);
 
     const updatedRental = {
       vehicleModel,
@@ -62,86 +78,189 @@ const EditVehiclePage = () => {
       agency: {
         name: agencyName,
         contactEmail,
-        ...(fleetSize !== "" && { fleetSize: Number(fleetSize) }),
+        ...(fleetSize !== "" && {
+          fleetSize: Number(fleetSize),
+        }),
       },
-      location: { city, state },
+      location: {
+        city,
+        state,
+      },
       dailyPrice: Number(dailyPrice),
       availabilityStatus,
-      ...(bookingDeadline && { bookingDeadline }),
+      ...(bookingDeadline && {
+        bookingDeadline,
+      }),
       insurancePolicy,
     };
 
     try {
-      const res = await fetch(`/api/vehicleRentals/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedRental),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || data.message || "Failed to update vehicle rental");
-      }
+      await updateVehicleRental(id, updatedRental);
       navigate(`/rentals/${id}`);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-
-  const field = { width: "100%", padding: "8px", marginBottom: "10px" };
+  if (loading) {
+    return <p>Loading vehicle...</p>;
+  }
 
   return (
-    <div style={{ maxWidth: "500px", margin: "20px auto" }}>
+    <div style={{ maxWidth: "700px", margin: "0 auto" }}>
       <h2>Edit Vehicle Rental</h2>
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+
+      {error && (
+        <p style={{ color: "red" }}>
+          {error}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <label>Vehicle Model:</label>
-        <input style={field} value={vehicleModel} onChange={(e) => setVehicleModel(e.target.value)} required />
+        <div>
+          <label>Vehicle Model</label>
+          <input
+            type="text"
+            value={vehicleModel}
+            onChange={(e) => setVehicleModel(e.target.value)}
+            required
+          />
+        </div>
 
-        <label>Category:</label>
-        <input style={field} value={category} onChange={(e) => setCategory(e.target.value)} required />
+        <div>
+          <label>Category</label>
+          <input
+            type="text"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            required
+          />
+        </div>
 
-        <label>Description:</label>
-        <textarea style={field} value={description} onChange={(e) => setDescription(e.target.value)} required />
+        <div>
+          <label>Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+        </div>
 
         <h3>Agency</h3>
-        <label>Agency Name:</label>
-        <input style={field} value={agencyName} onChange={(e) => setAgencyName(e.target.value)} required />
 
-        <label>Contact Email:</label>
-        <input style={field} type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required />
+        <div>
+          <label>Agency Name</label>
+          <input
+            type="text"
+            value={agencyName}
+            onChange={(e) => setAgencyName(e.target.value)}
+            required
+          />
+        </div>
 
-        <label>Fleet Size:</label>
-        <input style={field} type="number" value={fleetSize} onChange={(e) => setFleetSize(e.target.value)} />
+        <div>
+          <label>Contact Email</label>
+          <input
+            type="email"
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label>Fleet Size</label>
+          <input
+            type="number"
+            value={fleetSize}
+            onChange={(e) => setFleetSize(e.target.value)}
+            min="0"
+          />
+        </div>
 
         <h3>Location</h3>
-        <label>City:</label>
-        <input style={field} value={city} onChange={(e) => setCity(e.target.value)} required />
 
-        <label>State:</label>
-        <input style={field} value={state} onChange={(e) => setState(e.target.value)} required />
+        <div>
+          <label>City</label>
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            required
+          />
+        </div>
 
-        <label>Daily Price (€):</label>
-        <input style={field} type="number" step="0.01" value={dailyPrice} onChange={(e) => setDailyPrice(e.target.value)} required />
+        <div>
+          <label>State</label>
+          <input
+            type="text"
+            value={state}
+            onChange={(e) => setState(e.target.value)}
+            required
+          />
+        </div>
 
-        <label>Availability:</label>
-        <select style={field} value={availabilityStatus} onChange={(e) => setAvailabilityStatus(e.target.value)}>
-          <option value="available">available</option>
-          <option value="rented">rented</option>
-          <option value="maintenance">maintenance</option>
-        </select>
+        <div>
+          <label>Daily Price</label>
+          <input
+            type="number"
+            value={dailyPrice}
+            onChange={(e) => setDailyPrice(e.target.value)}
+            min="0"
+            step="0.01"
+            required
+          />
+        </div>
 
-        <label>Booking Deadline:</label>
-        <input style={field} type="date" value={bookingDeadline} onChange={(e) => setBookingDeadline(e.target.value)} />
+        <div>
+          <label>Availability Status</label>
+          <select
+            value={availabilityStatus}
+            onChange={(e) =>
+              setAvailabilityStatus(e.target.value)
+            }
+            required
+          >
+            <option value="">Select status</option>
+            <option value="Available">Available</option>
+            <option value="Unavailable">Unavailable</option>
+          </select>
+        </div>
 
-        <label>Insurance Policy:</label>
-        <input style={field} value={insurancePolicy} onChange={(e) => setInsurancePolicy(e.target.value)} required />
+        <div>
+          <label>Booking Deadline</label>
+          <input
+            type="date"
+            value={bookingDeadline}
+            onChange={(e) =>
+              setBookingDeadline(e.target.value)
+            }
+          />
+        </div>
 
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button type="submit" style={{ padding: "8px 16px", cursor: "pointer" }}>Save Changes</button>
-          <button type="button" onClick={() => navigate(`/rentals/${id}`)} style={{ padding: "8px 16px", cursor: "pointer" }}>
+        <div>
+          <label>Insurance Policy</label>
+          <textarea
+            value={insurancePolicy}
+            onChange={(e) =>
+              setInsurancePolicy(e.target.value)
+            }
+            required
+          />
+        </div>
+
+        <div style={{ marginTop: "20px" }}>
+          <button type="submit" disabled={saving}>
+            {saving ? "Saving..." : "Update Vehicle"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(`/rentals/${id}`)}
+            style={{ marginLeft: "10px" }}
+          >
             Cancel
           </button>
         </div>
