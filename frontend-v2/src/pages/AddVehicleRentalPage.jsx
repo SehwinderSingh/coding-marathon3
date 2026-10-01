@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authHeader } from "../services/authService";
 
 const AddVehicleRentalPage = () => {
   const navigate = useNavigate();
@@ -66,6 +67,7 @@ const AddVehicleRentalPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...authHeader(),
         },
         body: JSON.stringify(vehicleRental),
       });
@@ -75,8 +77,6 @@ const AddVehicleRentalPage = () => {
       if (!response.ok) {
         throw new Error(data.error || "Failed to create vehicle rental");
       }
-
-      console.log("Vehicle rental created:", data);
 
       navigate("/");
     } catch (error) {

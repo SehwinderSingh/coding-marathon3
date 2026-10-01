@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Home from "./pages/HomePage";
 import AddVehicleRentalPage from "./pages/AddVehicleRentalPage";
@@ -9,7 +9,6 @@ import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import Navbar from "./components/Navbar";
 import NotFoundPage from "./pages/NotFoundPage";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -30,64 +29,41 @@ const App = () => {
 
             <Route
               path="/signup"
-              element={<SignupPage />}
+              element={
+                isAuthenticated
+                  ? <Navigate to="/" />
+                  : <SignupPage setIsAuthenticated={setIsAuthenticated} />
+              }
             />
 
             <Route
               path="/login"
               element={
-                <LoginPage
-                  setIsAuthenticated={setIsAuthenticated}
-                />
+                isAuthenticated
+                  ? <Navigate to="/" />
+                  : <LoginPage setIsAuthenticated={setIsAuthenticated} />
               }
             />
 
+            {/* Protected pages: only for logged-in users */}
             <Route
               path="/add-rental"
-              element={<AddVehicleRentalPage />}
-            />
-
-            <Route
-              path="/rentals/:id"
-              element={<VehicleRentalPage />}
-            />
-
-            <Route
-              path="/rental/:id"
-              element={<VehicleRentalPage />}
-            />
-
-            <Route
-              path="/login"
-              element={<LoginPage />}
-            />
-
-            <Route
-              path="/signup"
-              element={<SignupPage />}
-            />
-
-            <Route
-              path="/add-rental"
-              element={
-                <ProtectedRoute>
-                  <AddVehicleRentalPage />
-                </ProtectedRoute>
-              }
+              element={isAuthenticated ? <AddVehicleRentalPage /> : <Navigate to="/login" />}
             />
 
             <Route
               path="/edit/:id"
-              element={
-                <ProtectedRoute>
-                  <EditVehiclePage />
-                </ProtectedRoute>
-              }
+              element={isAuthenticated ? <EditVehiclePage /> : <Navigate to="/login" />}
             />
 
             <Route
-              path="*"
-              element={<NotFoundPage />}
+              path="/rentals/:id"
+              element={<VehicleRentalPage isAuthenticated={isAuthenticated} />}
+            />
+
+            <Route
+              path="/rental/:id"
+              element={<VehicleRentalPage isAuthenticated={isAuthenticated} />}
             />
 
             <Route path="*" element={<NotFoundPage />} />

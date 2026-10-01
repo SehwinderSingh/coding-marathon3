@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { authHeader } from '../services/authService';
 
 const formatDate = (date) =>
   date ? new Date(date).toLocaleDateString('en-GB') : '-';
 
-const VehicleRentalPage = () => {
+const VehicleRentalPage = ({ isAuthenticated }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [rental, setRental] = useState(null);
@@ -30,7 +31,7 @@ const VehicleRentalPage = () => {
   const handleDelete = async () => {
     if (!window.confirm('Are you sure you want to delete this vehicle rental?')) return;
     try {
-      const res = await fetch(`/api/vehicleRentals/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/vehicleRentals/${id}`, { method: 'DELETE', headers: authHeader() });
       if (!res.ok) throw new Error('Failed to delete vehicle rental');
       navigate('/');
     } catch (err) {
@@ -63,10 +64,12 @@ const VehicleRentalPage = () => {
       <p><strong>Booking Deadline:</strong> {formatDate(rental.bookingDeadline)}</p>
       <p><strong>Insurance Policy:</strong> {rental.insurancePolicy}</p>
 
-      <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-        <button onClick={() => navigate(`/edit/${id}`)}>Edit</button>
-        <button onClick={handleDelete}>Delete</button>
-      </div>
+      {isAuthenticated && (
+        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          <button onClick={() => navigate(`/edit/${id}`)}>Edit</button>
+          <button onClick={handleDelete}>Delete</button>
+        </div>
+      )}
 
       <p style={{ marginTop: '20px' }}>
         <Link to="/">Back to vehicles</Link>

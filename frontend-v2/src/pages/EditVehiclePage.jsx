@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { authHeader } from "../services/authService";
 
 const EditVehiclePage = () => {
   const { id } = useParams();
@@ -74,7 +75,7 @@ const EditVehiclePage = () => {
     try {
       const res = await fetch(`/api/vehicleRentals/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify(updatedRental),
       });
       if (!res.ok) {
