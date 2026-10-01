@@ -6,7 +6,7 @@ I mainly worked on the frontend of the Vehicle Rental application.
 
 ### Part A – Frontend V1
 - Worked on the Vehicle Rental frontend.
-- Displayed vehicle rental listings from API V1.
+- Displayed vehicle rental listings from API V1. 
 - Connected the frontend with the Vehicle Rental API.
 - Worked on frontend pages and routing for vehicle rental operations.
 
