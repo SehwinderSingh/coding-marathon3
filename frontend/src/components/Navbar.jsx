@@ -9,7 +9,7 @@ function Navbar() {
         <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>
           Home
         </Link>
-        <Link to="/add" style={{ color: 'white', textDecoration: 'none' }}>
+        <Link to="/add-rental" style={{ color: 'white', textDecoration: 'none' }}>
           Add Vehicle
         </Link>
       </div>
